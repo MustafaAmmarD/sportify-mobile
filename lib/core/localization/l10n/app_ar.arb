@@ -1,0 +1,49 @@
+{
+  "@@locale": "ar",
+
+  "appName": "سبورتيفاي",
+
+  "commonLoading": "جارٍ التحميل...",
+  "commonRetry": "إعادة المحاولة",
+  "commonNoInternet": "لا يوجد اتصال بالإنترنت",
+  "commonServerError": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+  "commonCancel": "إلغاء",
+  "commonSave": "حفظ",
+  "commonDelete": "حذف",
+  "commonSearch": "بحث",
+  "commonSeeAll": "عرض الكل",
+  "commonEmpty": "لا يوجد شيء هنا بعد",
+
+  "scoutingTitle": "استكشاف المواهب",
+  "scoutingSearchHint": "البحث عن لاعبين بالاسم...",
+  "scoutingFilterPosition": "المركز",
+  "scoutingFilterAll": "جميع المراكز",
+  "scoutingPlayerGoals": "{count} أهداف",
+  "scoutingPlayerAssists": "{count} تمريرات حاسمة",
+  "scoutingPlayerMatches": "{count} مباريات",
+  "scoutingVisibilityScore": "تصنيف الكشافة الذكي",
+  "scoutingShortlistAdd": "إضافة إلى القائمة المختصرة",
+  "scoutingShortlistRemove": "إزالة من القائمة المختصرة",
+  "scoutingShortlistEmpty": "قائمتك المختصرة فارغة",
+  "scoutingShortlistTitle": "قائمتي المختصرة",
+  "scoutingViewProfile": "عرض الملف التفصيلي",
+  "scoutingPoolCandidates": "المرشحون",
+  "scoutingTopRanker": "الأفضل تصنيفاً",
+  "scoutingShortlisted": "في القائمة المختصرة",
+  "scoutingAvgVisibility": "متوسط الظهور",
+
+  "positionForward": "مهاجم",
+  "positionMidfielder": "لاعب وسط",
+  "positionDefender": "مدافع",
+  "positionGoalkeeper": "حارس مرمى",
+
+  "navExplore": "استكشاف",
+  "navTalentHub": "مركز المواهب",
+  "navNews": "الأخبار",
+  "navMore": "المزيد",
+
+  "settingsLanguage": "اللغة",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageGerman": "Deutsch",
+  "settingsLanguageArabic": "العربية"
+}

@@ -1,0 +1,49 @@
+{
+  "@@locale": "de",
+
+  "appName": "Sportify",
+
+  "commonLoading": "Laden...",
+  "commonRetry": "Erneut versuchen",
+  "commonNoInternet": "Keine Internetverbindung",
+  "commonServerError": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+  "commonCancel": "Abbrechen",
+  "commonSave": "Speichern",
+  "commonDelete": "Löschen",
+  "commonSearch": "Suche",
+  "commonSeeAll": "Alle anzeigen",
+  "commonEmpty": "Hier ist noch nichts",
+
+  "scoutingTitle": "Talent-Scouting",
+  "scoutingSearchHint": "Spieler nach Name suchen...",
+  "scoutingFilterPosition": "Position",
+  "scoutingFilterAll": "Alle Positionen",
+  "scoutingPlayerGoals": "{count} Tore",
+  "scoutingPlayerAssists": "{count} Vorlagen",
+  "scoutingPlayerMatches": "{count} Spiele",
+  "scoutingVisibilityScore": "KI-Scouting-Rang",
+  "scoutingShortlistAdd": "Zur Shortlist hinzufügen",
+  "scoutingShortlistRemove": "Von der Shortlist entfernen",
+  "scoutingShortlistEmpty": "Ihre Shortlist ist leer",
+  "scoutingShortlistTitle": "Meine Shortlist",
+  "scoutingViewProfile": "Tiefes Radar-Profil anzeigen",
+  "scoutingPoolCandidates": "Pool-Kandidaten",
+  "scoutingTopRanker": "Top-Rangiert",
+  "scoutingShortlisted": "Auf der Shortlist",
+  "scoutingAvgVisibility": "Durchschn. Sichtbarkeit",
+
+  "positionForward": "Stürmer",
+  "positionMidfielder": "Mittelfeldspieler",
+  "positionDefender": "Verteidiger",
+  "positionGoalkeeper": "Torwart",
+
+  "navExplore": "Entdecken",
+  "navTalentHub": "Talent Hub",
+  "navNews": "Nachrichten",
+  "navMore": "Mehr",
+
+  "settingsLanguage": "Sprache",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageGerman": "Deutsch",
+  "settingsLanguageArabic": "العربية"
+}

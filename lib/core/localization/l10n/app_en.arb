@@ -1,0 +1,64 @@
+{
+  "@@locale": "en",
+
+  "appName": "Sportify",
+
+  "commonLoading": "Loading...",
+  "commonRetry": "Retry",
+  "commonNoInternet": "No internet connection",
+  "commonServerError": "Something went wrong. Please try again.",
+  "commonCancel": "Cancel",
+  "commonSave": "Save",
+  "commonDelete": "Delete",
+  "commonSearch": "Search",
+  "commonSeeAll": "See all",
+  "commonEmpty": "Nothing here yet",
+
+  "scoutingTitle": "Talent Scouting",
+  "scoutingSearchHint": "Search players by name...",
+  "scoutingFilterPosition": "Position",
+  "scoutingFilterAll": "All Positions",
+  "scoutingPlayerGoals": "{count} Goals",
+  "@scoutingPlayerGoals": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "scoutingPlayerAssists": "{count} Assists",
+  "@scoutingPlayerAssists": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "scoutingPlayerMatches": "{count} Matches",
+  "@scoutingPlayerMatches": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "scoutingVisibilityScore": "AI Scouting Rank",
+  "scoutingShortlistAdd": "Add to Shortlist",
+  "scoutingShortlistRemove": "Remove from Shortlist",
+  "scoutingShortlistEmpty": "Your shortlist is empty",
+  "scoutingShortlistTitle": "My Shortlist",
+  "scoutingViewProfile": "View Deep Radar Profile",
+  "scoutingPoolCandidates": "Pool Candidates",
+  "scoutingTopRanker": "Top Ranker",
+  "scoutingShortlisted": "Shortlisted",
+  "scoutingAvgVisibility": "Avg Visibility",
+
+  "positionForward": "Forward",
+  "positionMidfielder": "Midfielder",
+  "positionDefender": "Defender",
+  "positionGoalkeeper": "Goalkeeper",
+
+  "navExplore": "Explore",
+  "navTalentHub": "Talent Hub",
+  "navNews": "News",
+  "navMore": "More",
+
+  "settingsLanguage": "Language",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageGerman": "Deutsch",
+  "settingsLanguageArabic": "العربية"
+}
