@@ -1,13 +1,14 @@
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
+import 'package:sportify/core/network/api_client.dart' show ApiClient;
 
 /// ── Auth Interceptor ──
 ///
 /// Attaches the Bearer token to every request.
 /// On 401 response, will attempt token refresh (when auth is implemented).
 ///
-/// TODO(mustafa): Wire up token storage once auth strategy is confirmed
+// TODO(mustafa): Wire up token storage once auth strategy is confirmed
 /// with Tony. Currently a no-op placeholder.
 class AuthInterceptor extends Interceptor {
   @override
@@ -38,15 +39,9 @@ class AuthInterceptor extends Interceptor {
 class LoggingInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    log(
-      '→ ${options.method} ${options.uri}',
-      name: 'API',
-    );
+    log('→ ${options.method} ${options.uri}', name: 'API');
     if (options.queryParameters.isNotEmpty) {
-      log(
-        '  Query: ${options.queryParameters}',
-        name: 'API',
-      );
+      log('  Query: ${options.queryParameters}', name: 'API');
     }
     handler.next(options);
   }
@@ -56,10 +51,7 @@ class LoggingInterceptor extends Interceptor {
     Response<dynamic> response,
     ResponseInterceptorHandler handler,
   ) {
-    log(
-      '← ${response.statusCode} ${response.requestOptions.uri}',
-      name: 'API',
-    );
+    log('← ${response.statusCode} ${response.requestOptions.uri}', name: 'API');
     handler.next(response);
   }
 

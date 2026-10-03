@@ -5,7 +5,7 @@ abstract class AppConstants {
 
   /// Default club ID used for shortlist operations.
   /// Tony hardcoded this for the evaluation demo.
-  /// TODO(mustafa): Confirm with Tony if this will become dynamic.
+  // TODO(mustafa): Confirm with Tony if this will become dynamic.
   static const int defaultClubId = 1;
 
   /// Connection timeout for API requests (in milliseconds).

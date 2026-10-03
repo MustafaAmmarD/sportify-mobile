@@ -16,10 +16,10 @@ class ApiClient {
   ApiClient({Dio? dio}) : _dio = dio ?? Dio() {
     _dio.options = BaseOptions(
       baseUrl: ApiConstants.baseUrl,
-      connectTimeout:
-          const Duration(milliseconds: AppConstants.connectionTimeout),
-      receiveTimeout:
-          const Duration(milliseconds: AppConstants.receiveTimeout),
+      connectTimeout: const Duration(
+        milliseconds: AppConstants.connectionTimeout,
+      ),
+      receiveTimeout: const Duration(milliseconds: AppConstants.receiveTimeout),
       headers: {
         HttpHeaders.contentTypeHeader: 'application/json',
         HttpHeaders.acceptHeader: 'application/json',
@@ -41,20 +41,14 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
-      return await _dio.get<dynamic>(
-        path,
-        queryParameters: queryParameters,
-      );
+      return await _dio.get<dynamic>(path, queryParameters: queryParameters);
     } on DioException catch (e) {
       throw _handleDioException(e);
     }
   }
 
   /// POST request with a request body.
-  Future<Response<dynamic>> post(
-    String path, {
-    dynamic data,
-  }) async {
+  Future<Response<dynamic>> post(String path, {dynamic data}) async {
     try {
       return await _dio.post<dynamic>(path, data: data);
     } on DioException catch (e) {
@@ -71,7 +65,7 @@ class ApiClient {
     }
   }
 
-  /// Maps [DioException] to our custom [SportifyException] hierarchy.
+  /// Maps [DioException] to our custom [app.SportifyException] hierarchy.
   app.SportifyException _handleDioException(DioException e) {
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
@@ -103,9 +97,10 @@ class ApiClient {
     final data = response?.data;
 
     // Try to extract message from Laravel's response format
-    final message = data is Map<String, dynamic>
-        ? (data['message'] as String?) ?? 'Server error'
-        : 'Server error';
+    final message =
+        data is Map<String, dynamic>
+            ? (data['message'] as String?) ?? 'Server error'
+            : 'Server error';
 
     switch (statusCode) {
       case 400:

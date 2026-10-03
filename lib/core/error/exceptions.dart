@@ -2,6 +2,9 @@
 ///
 /// These are thrown by the data layer (interceptors, data sources)
 /// and caught by repositories to convert into [Failure] objects.
+library;
+
+import 'package:sportify/core/error/failures.dart' show Failure;
 
 /// Base class for all Sportify exceptions.
 sealed class SportifyException implements Exception {
@@ -22,7 +25,7 @@ class BadRequestException extends SportifyException {
 /// 401 — Token expired or missing.
 class UnauthorizedException extends SportifyException {
   const UnauthorizedException({required super.message})
-      : super(statusCode: 401);
+    : super(statusCode: 401);
 }
 
 /// 403 — Insufficient permissions.
@@ -37,10 +40,8 @@ class NotFoundException extends SportifyException {
 
 /// 422 — Validation errors (Laravel's default for invalid input).
 class ValidationException extends SportifyException {
-  const ValidationException({
-    required super.message,
-    this.errors = const {},
-  }) : super(statusCode: 422);
+  const ValidationException({required super.message, this.errors = const {}})
+    : super(statusCode: 422);
 
   /// Field-level errors from Laravel: {"field": ["error1", "error2"]}
   final Map<String, List<String>> errors;

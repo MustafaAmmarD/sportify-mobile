@@ -37,9 +37,7 @@ class TimeoutFailure extends Failure {
 
 /// Local cache/storage failure.
 class CacheFailure extends Failure {
-  const CacheFailure({
-    super.message = 'Failed to load cached data.',
-  });
+  const CacheFailure({super.message = 'Failed to load cached data.'});
 }
 
 /// Validation failed (field-level errors from API).

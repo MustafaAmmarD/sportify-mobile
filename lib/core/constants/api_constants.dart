@@ -7,8 +7,7 @@ abstract class ApiConstants {
   ///
   /// Currently pointing to Tony's evaluation backend on Render.
   /// This will be updated when a production server is available.
-  static const String baseUrl =
-      'https://sportify-dashboard-4nyy.onrender.com';
+  static const String baseUrl = 'https://sportify-dashboard-4nyy.onrender.com';
 
   // ── Scouting Endpoints ──
 
@@ -24,6 +23,5 @@ abstract class ApiConstants {
   static const String shortlist = '/api/shortlist';
 
   /// DELETE - Removes a player from the shortlist.
-  static String removeFromShortlist(int playerId) =>
-      '/api/shortlist/$playerId';
+  static String removeFromShortlist(int playerId) => '/api/shortlist/$playerId';
 }
