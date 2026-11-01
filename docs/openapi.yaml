@@ -1,0 +1,1154 @@
+openapi: 3.0.3
+info:
+  title: Sportify API
+  version: 1.0.0-draft
+  description: |
+    Backend contract derived from the Sportify Flutter app (Phase 1).
+    Human-readable explanation of every endpoint: see `api_contract.md`.
+servers:
+  - url: https://api.sportify.de/api/v1
+    description: Production (planned)
+  - url: https://sportify-dashboard-4nyy.onrender.com/api/v1
+    description: Evaluation backend
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+  - name: Account
+  - name: Profile
+  - name: Connectionsdo the final cleanup pass (e.g., removing dead duplicate screens or expanding EN/DE/AR localization strings)
+  - name: Feed
+  - name: Players
+  - name: FitPass
+  - name: News
+  - name: Chat
+  - name: Company
+  - name: Notifications
+
+paths:
+  # ───────────────────────── AUTH ─────────────────────────
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user (role + GDPR consent)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201': { $ref: '#/components/responses/AuthOk' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                device_name: { type: string }
+      responses:
+        '200': { $ref: '#/components/responses/AuthOk' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/social/{provider}:
+    post:
+      tags: [Auth]
+      summary: Login / register with a social provider token (verified server-side)
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema: { type: string, enum: [google, apple, facebook, tiktok] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id_token: { type: string }
+                access_token: { type: string }
+                role: { $ref: '#/components/schemas/UserRole' }
+                first_name: { type: string }
+                last_name: { type: string }
+      responses:
+        '200': { $ref: '#/components/responses/AuthOk' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Exchange refresh token for a new access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        '200': { $ref: '#/components/responses/AuthOk' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Current authenticated user (session restore)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke tokens
+      responses:
+        '204': { description: Logged out }
+  /auth/password/forgot:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Send reset link (always 204)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '204': { description: Sent if account exists }
+  /auth/password/reset:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Reset password with token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, email, password]
+              properties:
+                token: { type: string }
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '204': { description: Password changed }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /auth/company-code:
+    post:
+      tags: [Auth]
+      summary: Redeem a company FIT-Pass invite code
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string, example: ACME-2026 }
+      responses:
+        '200':
+          description: Code redeemed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  company: { type: object, properties: { id: { type: string }, name: { type: string } } }
+                  plan: { $ref: '#/components/schemas/FitPassPlan' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: Code exhausted or expired }
+
+  # ───────────────────────── ACCOUNT (GDPR) ─────────────────────────
+  /account/export:
+    post:
+      tags: [Account]
+      summary: GDPR Art. 20 data export (emailed link)
+      responses:
+        '202': { description: Export queued }
+  /account:
+    delete:
+      tags: [Account]
+      summary: GDPR Art. 17 permanent account deletion (store requirement)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password: { type: string }
+                reason: { type: string }
+      responses:
+        '204': { description: Deleted }
+  /account/consents:
+    put:
+      tags: [Account]
+      summary: Update consent choices
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Consents' }
+      responses:
+        '200': { description: Updated }
+
+  # ───────────────────────── PROFILE ─────────────────────────
+  /profiles/me:
+    get:
+      tags: [Profile]
+      summary: My profile
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Profile' }
+    put:
+      tags: [Profile]
+      summary: Update my profile (partial)
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Profile' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Profile' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /profiles/{userId}:
+    get:
+      tags: [Profile]
+      summary: Public profile
+      security: []
+      parameters: [ { $ref: '#/components/parameters/UserId' } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Profile' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /profiles/me/avatar:
+    post:
+      tags: [Profile]
+      summary: Upload avatar
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '200':
+          description: Uploaded
+          content:
+            application/json:
+              schema: { type: object, properties: { avatar_url: { type: string } } }
+  /profiles/me/videos:
+    post:
+      tags: [Profile]
+      summary: Add a video link (platform auto-detected)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url: { type: string, format: uri }
+                title: { type: string }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VideoLink' }
+  /profiles/me/videos/{id}:
+    delete:
+      tags: [Profile]
+      summary: Remove video link
+      parameters: [ { $ref: '#/components/parameters/Id' } ]
+      responses:
+        '204': { description: Removed }
+
+  # ───────────────────────── CONNECTIONS ─────────────────────────
+  /connections:
+    get:
+      tags: [Connections]
+      summary: My connections
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [accepted, pending] } }
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200': { description: Paginated mini-profiles }
+    post:
+      tags: [Connections]
+      summary: Send connection request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id: { type: string }
+                message: { type: string }
+      responses:
+        '201': { description: Requested }
+        '409': { description: Already connected / pending }
+  /connections/requests:
+    get:
+      tags: [Connections]
+      summary: Incoming pending requests
+      responses:
+        '200': { description: List }
+  /connections/{id}/accept:
+    post:
+      tags: [Connections]
+      parameters: [ { $ref: '#/components/parameters/Id' } ]
+      responses:
+        '200': { description: Accepted }
+  /connections/{id}/decline:
+    post:
+      tags: [Connections]
+      parameters: [ { $ref: '#/components/parameters/Id' } ]
+      responses:
+        '204': { description: Declined }
+
+  # ───────────────────────── FEED ─────────────────────────
+  /feed:
+    get:
+      tags: [Feed]
+      summary: Paginated highlight feed (public for guest mode)
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - { name: hashtag, in: query, schema: { type: string } }
+        - { name: position, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/FeedPost' } }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+  /posts:
+    post:
+      tags: [Feed]
+      summary: Publish a highlight or workout post (after presigned upload)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type]
+              properties:
+                type: { type: string, enum: [highlight, workout] }
+                file_key: { type: string }
+                external_url: { type: string, nullable: true }
+                description: { type: string }
+                hashtags: { type: array, items: { type: string } }
+                workout:
+                  type: object
+                  properties:
+                    duration_min: { type: integer }
+                    calories: { type: integer }
+                    venue_id: { type: string }
+      responses:
+        '201':
+          description: Created (status processing)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FeedPost' }
+  /uploads/presign:
+    post:
+      tags: [Feed]
+      summary: Get a presigned URL for direct-to-storage upload
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [filename, content_type, size]
+              properties:
+                filename: { type: string }
+                content_type: { type: string, example: video/mp4 }
+                size: { type: integer, description: bytes }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  upload_url: { type: string }
+                  file_key: { type: string }
+                  expires_at: { type: string, format: date-time }
+  /posts/{id}/like:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    post:
+      tags: [Feed]
+      summary: Like a post
+      responses:
+        '200': { $ref: '#/components/responses/LikeState' }
+    delete:
+      tags: [Feed]
+      summary: Unlike a post
+      responses:
+        '200': { $ref: '#/components/responses/LikeState' }
+  /posts/{id}/comments:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [Feed]
+      security: []
+      parameters: [ { $ref: '#/components/parameters/Cursor' } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Comment' } }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+    post:
+      tags: [Feed]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string, maxLength: 1000 }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Comment' }
+  /posts/{id}/report:
+    post:
+      tags: [Feed]
+      summary: Report a post (UGC moderation — store requirement)
+      parameters: [ { $ref: '#/components/parameters/Id' } ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, enum: [spam, abuse, nudity, fake, other] }
+                details: { type: string }
+      responses:
+        '202': { description: Report received }
+  /users/{userId}/block:
+    parameters: [ { $ref: '#/components/parameters/UserId' } ]
+    post:
+      tags: [Feed]
+      summary: Block a user
+      responses:
+        '204': { description: Blocked }
+    delete:
+      tags: [Feed]
+      summary: Unblock a user
+      responses:
+        '204': { description: Unblocked }
+
+  # ───────────────────────── PLAYERS ─────────────────────────
+  /players/{id}:
+    get:
+      tags: [Players]
+      summary: Player scouting profile (header + overview)
+      security: []
+      parameters: [ { $ref: '#/components/parameters/Id' } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FeedPost' }
+  /players/{id}/stats:
+    get:
+      tags: [Players]
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - { name: season, in: query, schema: { type: string, example: 2025-26 } }
+      responses:
+        '200': { description: Season stats + radar }
+  /players/{id}/career:
+    get:
+      tags: [Players]
+      security: []
+      parameters: [ { $ref: '#/components/parameters/Id' } ]
+      responses:
+        '200': { description: Career timeline }
+  /players/{id}/market:
+    get:
+      tags: [Players]
+      security: []
+      parameters: [ { $ref: '#/components/parameters/Id' } ]
+      responses:
+        '200': { description: Market value history + contract }
+  /players/{id}/ai-analysis:
+    get:
+      tags: [Players]
+      parameters: [ { $ref: '#/components/parameters/Id' } ]
+      responses:
+        '200': { description: AI strengths / weaknesses / comparable players }
+  /shortlist:
+    get:
+      tags: [Players]
+      summary: My shortlist (scout/club/agent/coach)
+      responses:
+        '200': { description: List of players }
+    post:
+      tags: [Players]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [player_id]
+              properties:
+                player_id: { type: string }
+                note: { type: string }
+      responses:
+        '201': { description: Added }
+        '403': { description: Role not allowed }
+  /shortlist/{playerId}:
+    delete:
+      tags: [Players]
+      parameters:
+        - { name: playerId, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Removed }
+
+  # ───────────────────────── FIT-PASS ─────────────────────────
+  /fitpass/plans:
+    get:
+      tags: [FitPass]
+      security: []
+      parameters:
+        - { name: category, in: query, schema: { type: string, enum: [individual, company, club] } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/FitPassPlan' } }
+  /fitpass/partners:
+    get:
+      tags: [FitPass]
+      security: []
+      parameters:
+        - { name: lat, in: query, required: true, schema: { type: number } }
+        - { name: lng, in: query, required: true, schema: { type: number } }
+        - { name: radius_km, in: query, schema: { type: number, default: 10 } }
+        - { name: type, in: query, schema: { type: string } }
+        - { name: q, in: query, schema: { type: string } }
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/FitPassPartner' } }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+  /fitpass/membership:
+    get:
+      tags: [FitPass]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Membership' }
+    post:
+      tags: [FitPass]
+      summary: Activate a plan
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [plan_id]
+              properties:
+                plan_id: { type: string }
+                billing: { type: string, enum: [monthly, yearly] }
+      responses:
+        '201':
+          description: Activated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Membership' }
+  /fitpass/qr-token:
+    get:
+      tags: [FitPass]
+      summary: Rotating signed QR token (60s TTL)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  expires_at: { type: string, format: date-time }
+  /fitpass/check-ins:
+    post:
+      tags: [FitPass]
+      summary: Partner scans member QR
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, partner_id]
+              properties:
+                token: { type: string }
+                partner_id: { type: string }
+      responses:
+        '201': { description: Checked in }
+        '403': { description: Quota exceeded / plan not valid for partner }
+  /fitpass/partners/{id}/slots:
+    get:
+      tags: [FitPass]
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - { name: date, in: query, required: true, schema: { type: string, format: date } }
+      responses:
+        '200': { description: Available slots }
+  /fitpass/bookings:
+    get:
+      tags: [FitPass]
+      parameters:
+        - { name: upcoming, in: query, schema: { type: boolean } }
+      responses:
+        '200': { description: My bookings }
+    post:
+      tags: [FitPass]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slot_id]
+              properties:
+                slot_id: { type: string }
+      responses:
+        '201': { description: Booked }
+        '409': { description: Slot full }
+  /fitpass/bookings/{id}:
+    delete:
+      tags: [FitPass]
+      parameters: [ { $ref: '#/components/parameters/Id' } ]
+      responses:
+        '204': { description: Cancelled }
+  /fitpass/courses:
+    get:
+      tags: [FitPass]
+      security: []
+      responses:
+        '200': { description: Online courses }
+
+  # ───────────────────────── NEWS ─────────────────────────
+  /news:
+    get:
+      tags: [News]
+      security: []
+      summary: Localized news (Accept-Language)
+      parameters:
+        - { name: category, in: query, schema: { type: string } }
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/NewsItem' } }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+  /news/{id}:
+    get:
+      tags: [News]
+      security: []
+      parameters: [ { $ref: '#/components/parameters/Id' } ]
+      responses:
+        '200': { description: Article with body_html and related players }
+  /transfers:
+    get:
+      tags: [News]
+      security: []
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [rumour, negotiating, advanced, here_we_go, confirmed, loan] } }
+        - { name: q, in: query, schema: { type: string } }
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Transfer' } }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+  /matches:
+    get:
+      tags: [News]
+      security: []
+      parameters:
+        - { name: date, in: query, schema: { type: string, format: date } }
+        - { name: league, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Match' } }
+
+  # ───────────────────────── CHAT ─────────────────────────
+  /conversations:
+    get:
+      tags: [Chat]
+      parameters: [ { $ref: '#/components/parameters/Cursor' } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Conversation' } }
+    post:
+      tags: [Chat]
+      summary: Open or create a 1:1 conversation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Conversation' }
+  /conversations/{id}/messages:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [Chat]
+      parameters: [ { $ref: '#/components/parameters/Cursor' } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/ChatMessage' } }
+    post:
+      tags: [Chat]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string }
+                attachment_key: { type: string, nullable: true }
+                client_id: { type: string }
+      responses:
+        '201':
+          description: Sent
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChatMessage' }
+
+  # ───────────────────────── COMPANY ─────────────────────────
+  /company/employees:
+    get:
+      tags: [Company]
+      parameters: [ { $ref: '#/components/parameters/Cursor' } ]
+      responses:
+        '200': { description: Employees }
+  /company/employees/invite:
+    post:
+      tags: [Company]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emails: { type: array, items: { type: string, format: email } }
+                plan_id: { type: string }
+      responses:
+        '202': { description: Invites sent }
+  /company/usage:
+    get:
+      tags: [Company]
+      parameters:
+        - { name: period, in: query, schema: { type: string, example: 2026-10 } }
+      responses:
+        '200': { description: Usage stats }
+
+  # ───────────────────────── NOTIFICATIONS ─────────────────────────
+  /devices:
+    post:
+      tags: [Notifications]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, platform]
+              properties:
+                token: { type: string }
+                platform: { type: string, enum: [android, ios, web] }
+      responses:
+        '204': { description: Registered }
+  /notifications:
+    get:
+      tags: [Notifications]
+      parameters: [ { $ref: '#/components/parameters/Cursor' } ]
+      responses:
+        '200': { description: Notifications }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema: { type: string }
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, default: 20, maximum: 50 }
+
+  responses:
+    AuthOk:
+      description: Authenticated
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/AuthResponse' }
+    Unauthorized:
+      description: Missing / invalid credentials
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    LikeState:
+      description: Like state
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              liked: { type: boolean }
+              likes_count: { type: integer }
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        message: { type: string }
+        errors:
+          type: object
+          additionalProperties: { type: array, items: { type: string } }
+    PageMeta:
+      type: object
+      properties:
+        next_cursor: { type: string, nullable: true }
+        has_more: { type: boolean }
+    UserRole:
+      type: string
+      enum: [player, coach, club, scout, agent, fan, company_hr]
+    User:
+      type: object
+      required: [id, email, role, first_name, last_name]
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        role: { $ref: '#/components/schemas/UserRole' }
+        first_name: { type: string }
+        last_name: { type: string }
+        avatar_url: { type: string, nullable: true }
+        locale: { type: string, enum: [en, de, ar] }
+        email_verified: { type: boolean }
+        company_id: { type: string, nullable: true }
+    AuthResponse:
+      type: object
+      properties:
+        user: { $ref: '#/components/schemas/User' }
+        access_token: { type: string }
+        refresh_token: { type: string }
+        expires_in: { type: integer, example: 3600 }
+        is_new_user: { type: boolean }
+    Consents:
+      type: object
+      properties:
+        terms: { type: boolean }
+        privacy: { type: boolean }
+        marketing: { type: boolean }
+        data_processing: { type: boolean }
+        version: { type: string, example: '2026-10' }
+    RegisterRequest:
+      type: object
+      required: [email, password, role, first_name, last_name, consents]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        role: { $ref: '#/components/schemas/UserRole' }
+        first_name: { type: string }
+        last_name: { type: string }
+        locale: { type: string, enum: [en, de, ar] }
+        company_code: { type: string, nullable: true }
+        role_details: { type: object, additionalProperties: true }
+        consents: { $ref: '#/components/schemas/Consents' }
+    VideoLink:
+      type: object
+      properties:
+        id: { type: string }
+        platform: { type: string, enum: [youtube, vimeo, tiktok, instagram, facebook, other] }
+        url: { type: string }
+        title: { type: string }
+        thumbnail_url: { type: string, nullable: true }
+    Profile:
+      type: object
+      properties:
+        id: { type: string }
+        user_id: { type: string }
+        role: { $ref: '#/components/schemas/UserRole' }
+        first_name: { type: string }
+        last_name: { type: string }
+        avatar_url: { type: string, nullable: true }
+        cover_url: { type: string, nullable: true }
+        bio:
+          type: object
+          properties:
+            en: { type: string }
+            de: { type: string }
+            ar: { type: string }
+        position: { type: string }
+        nationality: { type: string }
+        preferred_foot: { type: string, enum: [Left, Right, Both] }
+        height_cm: { type: integer }
+        weight_kg: { type: integer }
+        date_of_birth: { type: string, format: date }
+        current_club: { type: string }
+        is_available_for_transfer: { type: boolean }
+        video_links: { type: array, items: { $ref: '#/components/schemas/VideoLink' } }
+    FeedPost:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [highlight, workout] }
+        author_id: { type: string }
+        author_name: { type: string }
+        author_avatar: { type: string, nullable: true }
+        video_url: { type: string }
+        thumbnail_url: { type: string, nullable: true }
+        description: { type: string }
+        hashtags: { type: array, items: { type: string } }
+        position_code: { type: string }
+        position_full: { type: string }
+        jersey_number: { type: integer }
+        age: { type: integer }
+        nationality: { type: string }
+        country_code: { type: string }
+        country_flag: { type: string }
+        availability_status: { type: string }
+        club_name: { type: string }
+        club_city: { type: string }
+        league_name: { type: string }
+        market_value: { type: string }
+        preferred_foot: { type: string }
+        height_cm: { type: integer }
+        languages: { type: array, items: { type: string } }
+        goals: { type: integer }
+        assists: { type: integer }
+        appearances: { type: integer }
+        minutes_played: { type: integer }
+        fit_score: { type: integer }
+        ai_rating: { type: integer }
+        likes_count: { type: integer }
+        comments_count: { type: integer }
+        is_liked: { type: boolean }
+        is_shortlisted: { type: boolean }
+        created_at: { type: string, format: date-time }
+    Comment:
+      type: object
+      properties:
+        id: { type: string }
+        text: { type: string }
+        created_at: { type: string, format: date-time }
+        author:
+          type: object
+          properties:
+            id: { type: string }
+            name: { type: string }
+            avatar_url: { type: string, nullable: true }
+    FitPassPlan:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        category: { type: string }
+        price: { type: number }
+        price_yearly: { type: number }
+        currency: { type: string, example: EUR }
+        check_ins_per_month: { type: integer }
+        features: { type: array, items: { type: string } }
+        is_popular: { type: boolean }
+    FitPassPartner:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string }
+        address: { type: string }
+        latitude: { type: number }
+        longitude: { type: number }
+        distance_km: { type: number }
+        image_url: { type: string, nullable: true }
+        rating: { type: number }
+        amenities: { type: array, items: { type: string } }
+        min_plan: { type: string }
+    Membership:
+      type: object
+      properties:
+        plan: { $ref: '#/components/schemas/FitPassPlan' }
+        status: { type: string, enum: [active, paused, expired] }
+        valid_until: { type: string, format: date }
+        check_ins_used: { type: integer }
+        check_ins_quota: { type: integer }
+        member_code: { type: string }
+    NewsItem:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        summary: { type: string }
+        source: { type: string }
+        url: { type: string }
+        image_url: { type: string, nullable: true }
+        published_at: { type: string, format: date-time }
+        category: { type: string }
+    Transfer:
+      type: object
+      properties:
+        id: { type: string }
+        player_id: { type: string, nullable: true }
+        player_name: { type: string }
+        position: { type: string }
+        from_club: { type: string }
+        to_club: { type: string }
+        status: { type: string, enum: [rumour, negotiating, advanced, here_we_go, confirmed, loan] }
+        fee: { type: string, nullable: true }
+        date: { type: string, format: date-time }
+        source: { type: string }
+        reliability: { type: integer, minimum: 0, maximum: 100 }
+    Match:
+      type: object
+      properties:
+        id: { type: string }
+        league: { type: object, properties: { id: { type: string }, name: { type: string } } }
+        home: { type: object, properties: { name: { type: string }, short: { type: string }, logo_url: { type: string } } }
+        away: { type: object, properties: { name: { type: string }, short: { type: string }, logo_url: { type: string } } }
+        score: { type: object, properties: { home: { type: integer }, away: { type: integer } } }
+        status: { type: string, enum: [scheduled, live, ht, ft, postponed] }
+        minute: { type: integer, nullable: true }
+        kickoff: { type: string, format: date-time }
+        motm:
+          type: object
+          nullable: true
+          properties:
+            player_id: { type: string }
+            name: { type: string }
+            rating: { type: number }
+    ChatParticipant:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        profile_image_url: { type: string, nullable: true }
+        is_online: { type: boolean }
+    ChatMessage:
+      type: object
+      properties:
+        id: { type: string }
+        sender_id: { type: string }
+        text: { type: string }
+        attachment_url: { type: string, nullable: true }
+        timestamp: { type: string, format: date-time }
+        is_read: { type: boolean }
+    Conversation:
+      type: object
+      properties:
+        id: { type: string }
+        other_participant: { $ref: '#/components/schemas/ChatParticipant' }
+        last_message: { $ref: '#/components/schemas/ChatMessage' }
+        unread_count: { type: integer }
+

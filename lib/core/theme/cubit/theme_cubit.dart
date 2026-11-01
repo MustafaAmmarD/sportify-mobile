@@ -15,7 +15,7 @@ class ThemeCubit extends Cubit<ThemeMode> {
     final saved = prefs.getString(_key);
     return ThemeMode.values.firstWhere(
       (m) => m.name == saved,
-      orElse: () => ThemeMode.system,
+      orElse: () => ThemeMode.dark,
     );
   }
 
